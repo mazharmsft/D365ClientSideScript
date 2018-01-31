@@ -1,0 +1,50 @@
+var UserName;
+var Alias;
+var serverUrl;
+
+function Getinfo() {
+var context;
+var UserID;
+var ODataPath;
+var selectFields = "$select=DomainName,FullName";
+
+context = Xrm.Page.context;
+serverUrl = context.getClientUrl();
+UserID = context.getUserId();
+ODataPath = serverUrl + "/XRMServices/2011/OrganizationData.svc";
+
+var retrieveUserReq = new XMLHttpRequest();
+retrieveUserReq.open("GET", ODataPath + "/SystemUserSet(guid'" + UserID + "')?"+ selectFields, false);
+retrieveUserReq.setRequestHeader("Accept", "application/json");
+retrieveUserReq.setRequestHeader("Content-Type", "application/json; charset=utf-8");
+retrieveUserReq.onreadystatechange = function () {
+retrieveUserReqCallBack(this);
+};
+retrieveUserReq.send();
+}
+
+function retrieveUserReqCallBack(retrieveUserReq) {
+if (retrieveUserReq.readyState == 4 /* complete */) {
+if (retrieveUserReq.status == 200) { 
+var retrievedUser = JSON.parse(retrieveUserReq.responseText).d; 
+if (retrievedUser.FullName!= null) {
+UserName = retrievedUser.FullName;  
+Alias = retrievedUser.DomainName;
+}
+}
+}
+}
+
+function captureTelemetry(){
+var appInsights=window.appInsights||function(config){
+        function s(config){t[config]=function(){var i=arguments;t.queue.push(function(){t[config].apply(t,i)})}}var t={config:config},r=document,f=window,e="script",o=r.createElement(e),i,u;for(o.src=config.url||"//az416426.vo.msecnd.net/scripts/a/ai.0.js",r.getElementsByTagName(e)[0].parentNode.appendChild(o),t.cookie=r.cookie,t.queue=[],i=["Event","Exception","Metric","PageView","Trace"];i.length;)s("track"+i.pop());return config.disableExceptionTracking||(i="onerror",s("_"+i),u=f[i],f[i]=function(config,r,f,e,o){var s=u&&u(config,r,f,e,o);return s!==!0&&t["_"+i](config,r,f,e,o),s}),t
+    }({
+        instrumentationKey:"REPLACE"
+    });
+    
+    window.appInsights=appInsights;
+    appInsights.trackPageView(Xrm.Page.data.entity.getEntityName(), serverUrl, {User: Xrm.Page.context.getUserName(), DomainName: Alias });
+}
+
+Getinfo();
+captureTelemetry();
